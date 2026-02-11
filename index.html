@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonia Nossa | Para Elisa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-black: #000000;
+            --bg-base: #121212;
+            --bg-surface: #181818;
+            --text-main: #ffffff;
+            --text-sub: #b3b3b3;
+            --spotify-green: #1db954;
+            --love-color: #ff2d55;
+            --lyrics-bg: #4a1a2c;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            font-family: 'Circular Std', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 1fr 90px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar { padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-box { background: var(--bg-base); border-radius: 8px; padding: 12px 16px; }
+        .nav-item { display: flex; align-items: center; gap: 20px; height: 48px; color: var(--text-sub); text-decoration: none; font-weight: bold; cursor: pointer; }
+        .nav-item:hover { color: white; }
+        .nav-item i { font-size: 24px; }
+
+        /* View Principal */
+        .main-view {
+            background: linear-gradient(to bottom, #4a1a2c 0%, var(--bg-base) 500px);
+            overflow-y: auto;
+            border-radius: 8px;
+            margin: 8px 8px 0 0;
+            position: relative;
+        }
+
+        .header { display: flex; align-items: flex-end; padding: 60px 32px 24px; gap: 24px; }
+        .album-art { width: 232px; height: 232px; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); object-fit: cover; }
+        .playlist-details h1 { font-size: clamp(32px, 8vw, 72px); margin: 8px 0; font-weight: 900; letter-spacing: -2px; }
+
+        /* Botão Spotify */
+        .btn-spotify {
+            background-color: var(--spotify-green);
+            color: black;
+            padding: 12px 24px;
+            border-radius: 500px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center; gap: 8px; margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        .btn-spotify:hover { transform: scale(1.05); }
+
+        /* SLOT DE VÍDEO (JOGA PARA O YOUTUBE) */
+        .video-slot-container { padding: 0 32px 32px; }
+        .video-card {
+            background: linear-gradient(90deg, #1db954 0%, #121212 100%);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center; gap: 20px; transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-decoration: none; /* Remove sublinhado de link */
+        }
+        .video-card:hover { transform: scale(1.01); }
+
+        /* Tabela de Músicas */
+        .section-container { padding: 0 32px; margin-bottom: 50px; }
+        .tracklist { width: 100%; border-collapse: collapse; color: var(--text-sub); }
+        .tracklist th { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px; text-align: left; font-size: 12px; }
+        .tracklist td { padding: 12px; font-size: 14px; }
+        .tracklist tr:hover { background: rgba(255,255,255,0.1); }
+        .acrostic-letter { color: var(--spotify-green); font-weight: 900; font-size: 16px; }
+
+        /* PAINEL DE LETRA */
+        #lyricsOverlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--lyrics-bg);
+            z-index: 100;
+            padding: 60px 32px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .close-lyrics { position: sticky; top: 0; float: right; font-size: 30px; cursor: pointer; color: rgba(255,255,255,0.5); }
+
+        /* Player Bar */
+        .player-footer { grid-column: 1 / span 2; background: black; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .now-playing { display: flex; align-items: center; gap: 14px; width: 30%; }
+        .now-playing img { width: 56px; height: 56px; border-radius: 4px; }
+
+        @media (max-width: 768px) {
+            body { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .header { flex-direction: column; align-items: center; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-box">
+            <div class="nav-item" style="color: white;"><i class="fa-solid fa-house"></i> Início</div>
+            <div class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> Buscar</div>
+        </div>
+        <div class="sidebar-box" style="flex: 1;">
+            <div class="nav-item" style="color: var(--spotify-green);" onclick="toggleLyrics()">
+                <i class="fa-solid fa-microphone-lines"></i> Ver Letra da História
+            </div>
+            <div class="nav-item" style="color: var(--love-color);"><i class="fa-solid fa-heart"></i> Músicas Curtidas</div>
+        </div>
+    </aside>
+
+    <main class="main-view">
+        <div id="lyricsOverlay">
+            <span class="close-lyrics" onclick="toggleLyrics()">×</span>
+            <div style="max-width: 600px; margin: 40px auto; font-size: 28px; font-weight: 800; line-height: 1.5; color: white;">
+                <p style="color: rgba(255,255,255,0.5); font-size: 14px; text-transform: uppercase;">A história por trás da playlist</p>
+                Para minha querida Elisa,<br><br>
+                A melhor melodia pra mim não vem de nenhuma música que existe no mundo… ela vem quando você fala comigo.<br><br>
+                Cada música romântica que eu já escutei ganhou um novo significado depois que te conheci, porque agora todas elas me lembram você, do seu jeito, da sua voz, do que eu sinto quando estamos juntos.<br><br>
+                Se alguém me perguntar qual é minha música favorita, eu vou responder sem pensar: é ouvir a ELisa falar. Nossa história é minha melodia favorita. ❤️
+            </div>
+        </div>
+
+        <div class="header">
+            <img src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=400" class="album-art">
+            <div class="playlist-details">
+                <p style="font-weight: bold; font-size: 14px;">Playlist Pública</p>
+                <h1>Harmonia Nossa</h1>
+                <p><span style="color: white; font-weight: bold;">Para minha cacheada</span> • 12 músicas, 45 min</p>
+                
+                <a href="https://open.spotify.com/playlist/0uTVqBlgSSsle0uCtZ2f6W?si=PYJKAdZRTTiLXaiQuJkohQ&pi=T97uXlDHRXCyk" target="_blank" class="btn-spotify">
+                    <i class="fa-brands fa-spotify"></i> Abrir no Spotify
+                </a>
+            </div>
+        </div>
+
+        <div class="video-slot-container">
+            <a href="https://youtube.com/shorts/5e6Xc7Aeomk" target="_blank" class="video-card">
+                <div style="position: relative; width: 100px; height: 100px; flex-shrink: 0;">
+                    <img src="https://images.unsplash.com/photo-1494972308805-463bc619d34e?q=80&w=200" style="width:100%; height:100%; object-fit: cover; border-radius: 4px;">
+                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);"><i class="fa-solid fa-play" style="color: white; font-size: 24px;"></i></div>
+                </div>
+                <div style="flex: 1;">
+                    <p style="color: white; font-size: 11px; font-weight: bold; text-transform: uppercase; margin: 0;">Destaque</p>
+                    <h2 style="color: white; margin: 4px 0; font-size: 22px; font-weight: 900;">Momentos que fizeram eu acreditar em conto de Fadas 🎥</h2>
+                    <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">Clique para assistir nosso vídeo no YouTube.</p>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: white; opacity: 0.5;"></i>
+            </a>
+        </div>
+
+        <div class="section-container">
+            <table class="tracklist">
+                <thead>
+                    <tr><th style="width: 30px;">#</th><th>Título</th><th>Álbum</th><th style="text-align: right;"><i class="fa-regular fa-clock"></i></th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">E</span>nchanted</div><div>Taylor Swift</div></td><td>Speak Now</td><td style="text-align: right;">5:52</td></tr>
+                    <tr><td>2</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">L</span>over</div><div>Taylor Swift</div></td><td>Lover</td><td style="text-align: right;">3:41</td></tr>
+                    <tr><td>3</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">I</span> Can Do It With a Broken Heart</div><div>Taylor Swift</div></td><td>TTPD</td><td style="text-align: right;">3:38</td></tr>
+                    <tr><td>4</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">S</span>harpest Tool</div><div>Sabrina Carpenter</div></td><td>Short n' Sweet</td><td style="text-align: right;">3:38</td></tr>
+                    <tr><td>5</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">A</span>ugust</div><div>Taylor Swift</div></td><td>folklore</td><td style="text-align: right;">4:21</td></tr>
+                    
+                    <tr style="height: 20px;"><td></td><td></td><td></td><td></td></tr>
+                    
+                    <tr><td>6</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">E</span>spresso</div><div>Sabrina Carpenter</div></td><td>Short n' Sweet</td><td style="text-align: right;">2:55</td></tr>
+                    <tr><td>7</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">U</span>s.</div><div>Gracie Abrams ft. Taylor Swift</div></td><td>The Secret of Us</td><td style="text-align: right;">4:02</td></tr>
+                    
+                    <tr style="height: 20px;"><td></td><td></td><td></td><td></td></tr>
+
+                    <tr><td>8</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">T</span>he Tortured Poets Department</div><div>Taylor Swift</div></td><td>TTPD</td><td style="text-align: right;">4:53</td></tr>
+                    <tr><td>9</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">E</span>verytime</div><div>Ariana Grande</div></td><td>Sweetener</td><td style="text-align: right;">2:52</td></tr>
+                    
+                    <tr style="height: 20px;"><td></td><td></td><td></td><td></td></tr>
+
+                    <tr><td>10</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">A</span>ll-American Bitch</div><div>Olivia Rodrigo</div></td><td>GUTS</td><td style="text-align: right;">2:45</td></tr>
+                    <tr><td>11</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">M</span>aroon</div><div>Taylor Swift</div></td><td>Midnights</td><td style="text-align: right;">3:38</td></tr>
+                    <tr><td>12</td><td><div style="color: white; font-weight: bold;"><span class="acrostic-letter">O</span>bsessed</div><div>Olivia Rodrigo</div></td><td>GUTS</td><td style="text-align: right;">2:50</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="player-footer">
+        <div class="now-playing">
+            <img src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=100">
+            <div>
+                <div style="font-size: 14px; font-weight: bold;">Enchanted</div>
+                <div style="font-size: 11px; color: var(--text-sub);">Taylor Swift</div>
+            </div>
+        </div>
+        <div onclick="toggleLyrics()" style="cursor: pointer; text-align: center;">
+            <i class="fa-solid fa-microphone-lines" style="color: var(--text-sub);"></i>
+            <p style="font-size: 10px; color: var(--text-sub); margin: 0;">Letras</p>
+        </div>
+        <div style="width: 30%;"></div>
+    </footer>
+
+    <script>
+        function toggleLyrics() {
+            const overlay = document.getElementById('lyricsOverlay');
+            overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
+        }
+    </script>
+</body>
+</html>
